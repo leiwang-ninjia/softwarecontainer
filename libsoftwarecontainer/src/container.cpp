@@ -84,6 +84,7 @@ Container::Container(const std::string id,
     m_shutdownTimeout(shutdownTimeout)
 {
     init_lxc();
+    removeSCOldContainers("SC-");
     log_debug() << "Container constructed with " << id;
 }
 
@@ -125,6 +126,60 @@ bool Container::initialize()
         m_state = ContainerState::PREPARED;
     }
     return true;
+}
+
+void Container::removeSCOldContainers(std::string prefix)
+{
+    char **containerNames = nullptr;
+    struct lxc_container **containerList = nullptr;
+
+    auto num = list_all_containers(s_LXCRoot, &containerNames, &containerList);
+
+    if (-1 == num) {
+        log_error() << "An error occurred while trying to get container list";
+    } else if (0 == num) {
+        delete containerNames;
+        delete containerList;
+        return;
+    }
+
+    // Convert the list/names to a map for convenience
+    std::map<std::string, struct lxc_container *> containerMap;
+    for(int i=0; i<num; i++) {
+        std::string name = std::string(containerNames[i]);
+        struct lxc_container *container = containerList[i];
+
+        containerMap[name] = container;
+        delete containerNames[i]; // We don't need this anymore
+    }
+    delete containerNames; // We don't need this anymore
+
+    for(const auto value : containerMap) {
+        std::string containerName = value.first;
+        struct lxc_container *container = value.second;
+
+        if (containerName.compare(0, prefix.size(), prefix)) {
+            log_debug() << "Found non-SC container " << containerName;
+            continue;
+        }
+
+        log_debug() << "Deprecated container named " << containerName << " will be deleted";
+
+        if (container->is_running(container)) {
+            bool success = container->stop(container);
+            if (!success) {
+                std::string errorMsg = "Unable to stop deprecated container " + containerName;
+            }
+        }
+
+        bool success = container->destroy(container);
+        if (!success) {
+            std::string errorMsg = "Unable to destroy deprecated container " + containerName;
+        }
+
+        log_debug() << "Deprecated container " << containerName << " is successfully destroyed";
+        delete value.second; // Remove the lxc_container struct that we allocated
+    }
 }
 
 std::string Container::toString()

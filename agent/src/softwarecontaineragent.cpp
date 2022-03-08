@@ -80,7 +80,6 @@ SoftwareContainerAgent::SoftwareContainerAgent(Glib::RefPtr<Glib::MainContext> m
     m_filteredConfigStore = std::make_shared<FilteredConfigStore>(std::move(loader));
     m_defaultConfigStore  = std::make_shared<DefaultConfigStore>(std::move(defaultLoader));
 
-    m_containerUtility->removeOldContainers();
     m_containerUtility->checkWorkspace();
 
     m_containerConfig = SoftwareContainerConfig(

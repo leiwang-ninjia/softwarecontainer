@@ -73,10 +73,6 @@ public:
     virtual ~ContainerUtilityInterface() {}
 
     /**
-     * @brief This method cleans unused old containers before agent starts up
-     */
-    void removeOldContainers(void);
-    /**
      * @brief Check that the workspace exists.
      */
     void checkWorkspace(void);

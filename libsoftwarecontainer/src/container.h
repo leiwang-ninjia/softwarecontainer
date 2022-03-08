@@ -92,6 +92,7 @@ public:
      *  creation.
      */
     bool create();
+    void removeSCOldContainers(std::string prefix);
 
     /**
      * @brief Start the container
